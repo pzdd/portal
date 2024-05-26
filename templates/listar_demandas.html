@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Listar</h1>
+    <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Título</th>
+            <th scope="col">Descrição</th>
+            <th scope="col">Categoria</th>
+            <th scope="col">Status</th>
+            <th scope="col">Editar</th>
+            <th scope="col">Excluir</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for demanda in demandas %}
+                <tr>
+                    <td>{{demanda.titulo}}</td>
+                    <td>{{demanda.descricao}}</td>
+                    <td>{{demanda.categoria.name}}</td>
+                    <td>{{demanda.status.name}}</td>
+                    <td><a href="{{ url_for('iniciarEditarDemanda', id = demanda.id)}}">Editar</a></td>
+                    <td><a href="{{ url_for('excluirDemanda', id = demanda.id)}}">Excluir</a></td>
+                </tr>
+            {% endfor%}
+        </tbody>
+      </table>
+{% endblock%}

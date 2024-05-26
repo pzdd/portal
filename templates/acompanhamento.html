@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Acompanhamento</h1>
+    <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Título</th>
+            <th scope="col">Descrição</th>
+            <th scope="col">Categoria</th>
+            <th scope="col">Status</th>
+            <th scope="col">Responsável</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for demanda in demandas %}
+                <tr>
+                    <td>{{demanda.titulo}}</td>
+                    <td>{{demanda.descricao}}</td>
+                    <td>{{demanda.categoria.name}}</td>
+                    <td>{{demanda.status.name}}</td>
+                    <td>{{demanda.analista_responsavel}}</td>
+                </tr>
+            {% endfor%}
+        </tbody>
+      </table>
+{% endblock%}

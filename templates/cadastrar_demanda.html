@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Cadastro</h1>
+    <form action="/cadastrar_demanda" method="post">
+        <label for="categoria">Demanda:</label>
+        <select name="categoria" id="categoria">
+            <option value="0">Selecione a demanda</option>
+            {% for op in categorias %}
+                <option value="{{op.value}}">{{op.name}}</option>
+            {% endfor%}
+        </select><br>
+        <label for="titulo">Título:</label>
+        <input type="text" name="titulo" id="titulo"><br>
+        <label for="descricao">Descrição:</label>
+        <textarea name="descricao" id="descricao"></textarea><br>
+        <label for="anexos">Anexo(s):</label><br>
+        <input type="submit" value="Cadastrar">
+        <form action="/home">
+            <input type="submit" value="Cancelar">
+        </form>
+    </form>
+{% endblock%}
