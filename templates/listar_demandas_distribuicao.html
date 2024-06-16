@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content%}
+<h1>Listar</h1>
+<table class="table table-hover">
+    <thead>
+      <tr>
+        <th scope="col">Título</th>
+        <th scope="col">Descrição</th>
+        <th scope="col">Categoria</th>
+        <th scope="col">Status</th>
+        <th scope="col">#</th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for demanda in demandas %}
+            <tr>
+                <td>{{demanda.titulo}}</td>
+                <td>{{demanda.descricao}}</td>
+                <td>{{demanda.categoria.name}}</td>
+                <td>{{demanda.status.name}}</td>
+                <td>
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+                        Atribuir
+                    </button>
+                </td>
+            </tr>
+            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <form method="post" action="/atribuir_analista">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Atribuir Demanda</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" value="{{demanda.id}}" name="id_demanda">
+                            <select name="analista" id="analista">
+                                <option value="0">-- SELECIONE --</option>
+                                {% for analista in analistas %}
+                                <option value="{{analista.id}}">{{analista.nomeCompleto}}</option>
+                                {% endfor%}
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+        {% endfor%}
+    </tbody>
+  </table>
+{% endblock %}

@@ -2,22 +2,35 @@
 
 {% block content %}
     <h1>Editar</h1>
-    <form action="{{ url_for('editarDemanda', id = demanda.id)}}" method="POST">
-        <label for="categoria">Demanda:</label>
-        <select name="categoria" id="categoria" value="{{demanda.categoria.value}}">
-            <option value="0">Selecione a demanda</option>
-            {% for op in categorias %}
-                <option value="{{op.value}}">{{op.name}}</option>
-            {% endfor%}
-        </select><br>
-        <label for="titulo">Título:</label>
-        <input type="text" name="titulo" id="titulo" value="{{demanda.titulo}}"><br>
-        <label for="descricao">Descrição:</label>
-        <textarea name="descricao" id="descricao">{{demanda.descricao}}</textarea><br>
-        <label for="anexos">Anexo(s):</label><br>
-        <input type="submit" value="Editar">
-        <form action="/home">
-            <input type="submit" value="Cancelar">
-        </form>
+    <form action="{{ url_for('editarDemanda', id = demanda.id)}}" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="categoria">Demanda:</label>
+            <select class="form-control" name="categoria" id="categoria" value="{{demanda.categoria.value}}" >
+                <option value="0">Selecione a demanda</option>
+                {% for op in categorias %}
+                    <option value="{{op.value}}" {% if demanda.categoria.value == op.value %} selected {% endif %}>{{op.name}}</option>
+                {% endfor%}
+            </select><br>
+            <label for="titulo">Título:</label>
+            <input type="text" name="titulo" id="titulo" value="{{demanda.titulo}}" class="form-control"><br>
+            <label for="descricao">Descrição:</label>
+            <textarea name="descricao" id="descricao" class="form-control">{{demanda.descricao}}</textarea><br>
+            <label for="anexos">Anexo(s):</label><br>
+            {% for anexo in demanda.anexos %}
+            <a href="{{ url_for('downloadFile', id=anexo.id)}}">
+                {{anexo.nome_arquivo}}
+                <button type="button" class="close" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+             </a>
+             
+             <br>
+            {% endfor %}
+            <input type="file" name="file" multiple class="form-control"/><br><br>
+            <input type="submit" value="Editar">
+            <form action="/home">
+                <input type="submit" value="Cancelar">
+            </form>
+        </div>
     </form>
 {% endblock%}

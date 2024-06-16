@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect, flash
+from flask import Flask, render_template, request, url_for, redirect, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from sqlalchemy import Enum
@@ -7,12 +7,15 @@ from flask_wtf import FlaskForm
 from wtforms import (StringField, TextAreaField, IntegerField, BooleanField,RadioField,SelectField)
 from wtforms.validators import InputRequired, Length
 import enum
+import os
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 
  
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:admin@localhost:5432/portal_demandas'
+app.config['UPLOAD_FOLDER'] = 'D:\\Documents\\GitHub\\portal\\static\\arquivos_upload\\'
 app.secret_key = 'super secret key'
 db = SQLAlchemy()
  
@@ -111,7 +114,7 @@ def login():
         user = Usuario.query.filter_by(cpf=request.form.get("username")).first()
         if user != None and user.senha == request.form.get("password"):
             login_user(user)
-            return redirect(url_for("home"))
+            return redirect(url_for("exibirDashboard"))
     flash("Verifique o usuário e senha.")
     return render_template("index.html")
  
@@ -137,10 +140,16 @@ def cadastrarDemanda():
     if request.method == "POST":
         form = CadastroDemandaForm(meta={'csrf' : False})
         if form.validate_on_submit():
+            files = request.files.getlist('file')
             demanda = Demanda(titulo=form.titulo.data, descricao = form.descricao.data, dataAbertura=datetime.now(), status = Status.ABERTA, 
                               tipo = TipoDemanda.SIMPLES, usuario_demandante = current_user, categoria = CategoriaDemanda(form.categoria.data))
             db.session.add(demanda)
             db.session.commit()
+            for f in files:
+                f.save(secure_filename(os.path.join(app.config['UPLOAD_FOLDER'],f.filename)))
+                anexo = Anexo(caminho_arquivo = app.config['UPLOAD_FOLDER'], nome_arquivo = f.filename, id_usuario_cadastro = current_user.id, data_cadastro = datetime.now(), demanda = demanda)
+                db.session.add(anexo)
+                db.session.commit()
             flash("Solicitação realizada com sucesso.")
         else:
             for erro in form.errors.items():
@@ -155,13 +164,18 @@ def cadastrarDemanda():
 @app.route("/listar_demandas")
 @login_required
 def redirecionaListarDemanda():
-    demandas = Demanda.query.filter_by(status = Status.ABERTA)
+    if(NivelAcesso(current_user.nivelAcesso) == NivelAcesso.COMUM):
+        demandas = Demanda.query.filter_by(status = Status.ABERTA, usuario_demandante = current_user)
+    else:
+         demandas = Demanda.query.all()
     return render_template("listar_demandas.html", demandas = demandas)
  
 @app.route("/iniciar_editar_demanda/<int:id>")
 @login_required
 def iniciarEditarDemanda(id):
     demanda = Demanda.query.filter_by(id = id).first_or_404()
+    anexos = Anexo.query.filter_by(id_demanda = id).all()
+    demanda.anexos = anexos
     return render_template("editar_demanda.html", demanda = demanda, categorias = [i for i in CategoriaDemanda])
  
 @app.route("/editar_demanda/<int:id>", methods=["GET", "POST"])
@@ -171,10 +185,17 @@ def editarDemanda(id):
         form = CadastroDemandaForm(meta={'csrf' : False})
         demanda = Demanda.query.filter_by(id = id).first_or_404()
         if form.validate_on_submit():
+            files = request.files.getlist('file')
             demanda.titulo = form.titulo.data
             demanda.descricao = form.descricao.data
             demanda.categoria = CategoriaDemanda(form.categoria.data).name
             db.session.commit()
+            for f in files:
+                f.save(secure_filename(os.path.join(app.config['UPLOAD_FOLDER'],f.filename)))
+                anexo = Anexo(caminho_arquivo = app.config['UPLOAD_FOLDER'], nome_arquivo = f.filename, id_usuario_cadastro = current_user.id, data_cadastro = datetime.now(), demanda = demanda)
+                db.session.add(anexo)
+                db.session.commit()
+
             flash("Editado com sucesso.")
             demandas = Demanda.query.all()
             return render_template("listar_demandas.html", demandas = demandas)
@@ -199,8 +220,53 @@ def excluirDemanda(id):
 @app.route("/acompanhamento")
 @login_required
 def redirecionaAcompanhamento():
-    demandas = Demanda.query.filter_by(usuario_demandante = current_user, status = Status.CANCELADA)
+    demandas = Demanda.query.filter_by(usuario_demandante = current_user)
     return render_template("acompanhamento.html", demandas = demandas)
+
+@app.route('/download/<int:id>')
+@login_required
+def downloadFile(id):
+    try:
+        anexo = Anexo.query.filter_by(id = id).first_or_404()
+        return send_file(path_or_file=os.path.join(app.config['UPLOAD_FOLDER'],anexo.nome_arquivo))
+    except FileNotFoundError:
+        flash('arquivo não encontrado')
+        return redirecionaListarDemanda()
+
+@app.route('/distribuicao_demandas')
+@login_required
+def listarDemandasPendentesDistribuicao():
+    demandas = Demanda.query.all()
+    analistas = Usuario.query.filter_by(nivelAcesso = NivelAcesso.INTELIGENCIA).all()
+    return render_template('listar_demandas_distribuicao.html', demandas = demandas, analistas = analistas)
+
+@app.route('/atribuir_analista', methods=['POST','GET'])
+@login_required
+def atribuirAnalista():
+    if request.method == 'POST':
+        id_analista = request.form.get('analista')
+        id_demanda = request.form.get('id_demanda')
+        analista = Usuario.query.filter_by(id = id_analista).first_or_404()
+        demanda = Demanda.query.filter_by(id = id_demanda).first_or_404()
+        demanda.id_analista_responsavel = analista.id
+        db.session.commit()
+        flash('Demanda atribuída')
+        return listarDemandasPendentesDistribuicao()
+    if request.method == 'GET':
+        return listarDemandasPendentesDistribuicao()
+
+@app.route('/dashboard')
+@login_required
+def exibirDashboard():
+    abertas = Demanda.query.filter_by(status = Status.ABERTA).all()
+    ag_distribuicao = Demanda.query.filter_by(status = Status.AGUARDANDO_DISTRIBUICAO).all()
+    return render_template('dashboard.html', abertas = abertas, ag_distribuica = ag_distribuicao)
+
+@app.route('/detalhar_demanda/<int:id>')
+@login_required
+def detalharDemanda(id):
+    demanda = Demanda.query.filter_by(id = id).first_or_404()
+    return render_template('detalhar_demanda.html', demanda = demanda)
 
 if __name__ == "__main__":
     app.run(debug=True)

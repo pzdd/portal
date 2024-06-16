@@ -3,25 +3,26 @@
 {% block content %}
     
     <form action="/login" method="post">
-        <table align="center">
-            <td>
-                <tr>
-                    <label for="username">CPF:</label>
-                    <input type="text" name="username" /><br>
-                </tr>
-            </td>
-            <td>
-                <tr>
-                    <label for="password">Senha:</label>
-                    <input type="password" name="password" /><br>
-                </tr>
-            </td>
-            <td>
-                <tr>
-                    <button type="submit">Acessar</button>
-                </tr>
-            </td>
-        
-        
+        <div class="form-group">
+            <table align="center">
+                <td>
+                    <tr>
+                        <label for="username">CPF:</label>
+                        <input type="text" name="username" class="form-control"/><br>
+                    </tr>
+                </td>
+                <td>
+                    <tr>
+                        <label for="password">Senha:</label>
+                        <input type="password" name="password" class="form-control"/><br>
+                    </tr>
+                </td>
+                <td>
+                    <tr>
+                        <button type="submit" class="btn btn-primary">Acessar</button>
+                    </tr>
+                </td>
+            </table>
+        </div>
     </form>
 {% endblock %}

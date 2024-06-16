@@ -29,11 +29,16 @@
                 <li class="nav-item">
                   <a class="nav-link" href="{{ url_for('redirecionaAcompanhamento')}}">Acompanhamento</a>
                 </li>
+                {% if current_user.nivelAcesso.name == 'INTELIGENCIA' or current_user.nivelAcesso.name == 'ADMINISTRADOR' %}
                 <li class="nav-item">
-                  <a class="nav-link" href="#">Demandas pendentes de distribuição</a>
+                  <a class="nav-link" href="{{ url_for('listarDemandasPendentesDistribuicao')}}">Demandas pendentes de distribuição</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#">Dashboard</a>
+                  <a class="nav-link" href="{{ url_for('exibirDashboard')}}">Dashboard</a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                  <a href="{{url_for('logout')}}" class="nav-link">Logout({{current_user.nomeCompleto}})</a>
                 </li>
               </ul>
             </div>
@@ -47,7 +52,7 @@
             {% endif %}
             {% endwith %}
         </div>
-          <div class="content" align="center">
+          <div class="container" align="center">
             <br><br>
             {% block content %} {% endblock %}
         </div>

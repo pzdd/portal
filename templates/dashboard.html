@@ -1,0 +1,63 @@
+{% extends 'base.html'%}
+
+{% block content %}
+    <div class="row">
+        <div class="col">
+            <p>aberta</p>
+            {% for demanda in abertas%}
+            <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">{{demanda.titulo}}</h5>
+                  <p class="card-text">{{demanda.descricao}}</p>
+                  <a href="{{ url_for('detalharDemanda', id = demanda.id)}}">Detalhar</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="col">
+            <p>fazendo</p>
+            <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Card title</h5>
+                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <p>aguardando distribuicao</p>
+            <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Card title</h5>
+                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <p>atribuida/fazendo</p>
+            <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Card title</h5>
+                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <p>com impedimento</p>
+            <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Card title</h5>
+                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <p>finalizada/cancelada</p>
+            <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Card title</h5>
+                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>
+                </div>
+            </div>
+        </div>
+</div>
+{% endblock %}
