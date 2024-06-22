@@ -1,0 +1,11 @@
+{% extends 'base.html'%}
+
+{% block content%}
+    <form action="{{url_for('cadastraArquivo')}}" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" class="form-control"/>
+        <input type="submit" value="Cadastrar">
+    </form>
+    {% for arquivo in arquivos %}
+    <a href="{{url_for('download_arquivo', id = arquivo.id)}}" target="_blank">{{arquivo.nome_arquivo}}</a>
+    {%endfor%}
+{% endblock %}

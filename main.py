@@ -1,18 +1,20 @@
-from flask import Flask, render_template, request, url_for, redirect, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
+import os
+from flask import Flask, render_template, request, url_for, redirect, flash, send_file
+from datetime import datetime
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.utils import secure_filename
+import enum
+from flask_login import LoginManager, UserMixin, login_user, logout_user
 from sqlalchemy.orm import relationship
 from sqlalchemy import Enum
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from flask_wtf import FlaskForm
 from wtforms import (StringField, TextAreaField, IntegerField, BooleanField,RadioField,SelectField)
+from flask_wtf import FlaskForm
 from wtforms.validators import InputRequired, Length
-import enum
-import os
-from datetime import datetime
-from werkzeug.utils import secure_filename
+import base64
+from io import BytesIO
+import codecs
 
-
- 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:admin@localhost:5432/portal_demandas'
 app.config['UPLOAD_FOLDER'] = 'D:\\Documents\\GitHub\\portal\\static\\arquivos_upload\\'
@@ -21,6 +23,7 @@ db = SQLAlchemy()
  
 login_manager = LoginManager()
 login_manager.init_app(app)
+db.init_app(app)
 
 class NivelAcesso(enum.Enum):
     ADMINISTRADOR = 1
@@ -87,22 +90,24 @@ class Anexo(db.Model):
     id_demanda = db.Column(db.BigInteger, db.ForeignKey("demanda.id"))
     demanda = relationship("Demanda", back_populates="anexos")
 
-db.init_app(app)
- 
- 
-with app.app_context():
-    db.create_all()
+class Arquivo(db.Model):
+    id = db.Column(db.BigInteger, primary_key= True)
+    nome_arquivo = db.Column(db.String(250))
+    extensao = db.Column(db.String(250))
+    base = db.Column(db.Text)#bytea
+    mimetype = db.Column(db.String(250))
 
 class CadastroDemandaForm(FlaskForm):
     titulo = StringField('titulo', validators=[InputRequired(message="Informe o título"),Length(min=1, max=200)])
     descricao = TextAreaField('descricao',validators=[InputRequired(message="Informe a descrição"),Length(max=240)])
     categoria = SelectField('categoria',choices=[i.value for i in CategoriaDemanda],coerce=int, validators=[InputRequired(message="Escolha uma opção")])
- 
- 
+  
+with app.app_context():
+    db.create_all()
+
 @login_manager.user_loader
 def loader_user(user_id):
     return Usuario.query.get(user_id)
- 
 
 @app.route("/")
 def index():
@@ -158,8 +163,6 @@ def cadastrarDemanda():
         return render_template("home.html")
     if request.method == "GET":
         return render_template("cadastrar_demanda.html",categorias = [i for i in CategoriaDemanda])
-
-
 
 @app.route("/listar_demandas")
 @login_required
@@ -268,5 +271,32 @@ def detalharDemanda(id):
     demanda = Demanda.query.filter_by(id = id).first_or_404()
     return render_template('detalhar_demanda.html', demanda = demanda)
 
+@app.route("/redirecionaDownload")
+@login_required
+def redirecionaDownload():
+    arquivos = Arquivo.query.all()
+    return render_template("arquivos.html", arquivos = arquivos)
+
+@app.route("/cadastra_arquivo", methods=['POST'])
+@login_required
+def cadastraArquivo():
+    if request.method == 'POST':
+        arq = request.files['file']
+        sp = arq.filename.split(".")
+        base = base64.b64encode(arq.read())
+        print(base)
+        arquivo = Arquivo(nome_arquivo = arq.filename, extensao = sp[1],base = base, mimetype= arq.mimetype)
+        db.session.add(arquivo)
+        db.session.commit()
+        arquivos = Arquivo.query.all()
+        return render_template('arquivos.html', arquivos = arquivos)
+    
+@app.route('/download_arquivo/<int:id>')
+def download_arquivo(id):
+    arquivo = Arquivo.query.filter_by(id = id).first_or_404()
+    print(arquivo.base)
+    #bytea
+    return send_file(BytesIO(base64.b64decode(arquivo.base)), mimetype=arquivo.mimetype)
+    
 if __name__ == "__main__":
     app.run(debug=True)
